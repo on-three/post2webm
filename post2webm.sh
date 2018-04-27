@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# do we have the tools we need to run this?
+# Script depends on access to:
+# * ffmpeg (tested with version: ffmpeg version 2.8.11-0ubuntu0.16.04.1)
+# * phantomjs (tested with version: 2.1.1)
+# * optional dependecy on uploadtomixtape.sh
+if [ ! $(which ffmpeg) ]; then
+    echo "ERROR: no ffmpeg executable in current PATH"
+    exit -2
+fi
+
+
+if [ ! $(which phantomjs) ]; then
+    echo "ERROR: no phantomjs executable in current PATH"
+    exit -2
+fi
 
 if [ "$#" -lt 1 ]; then
 	echo "USAGE: $0  <url to 4chin post> [-u: upload to mixtape.moe]"
@@ -41,7 +56,7 @@ NO_TEXT_DURATION_S=4
 # generate an image and textfile off the post
 # there will ALWAYS be a POST_IMG afterwards but there may not be a POST_TXT
 if [ ! -f $POST_IMG ]; then
-  phantomjs tools/get_post.js "$POST_URL" "$WORKING_DIR"
+  phantomjs get_post.js "$POST_URL" "$WORKING_DIR"
   convert $POST_IMG -gravity center -background black -resize $IMG_SIZE -extent $IMG_SIZE $POST_IMG
 fi
 
