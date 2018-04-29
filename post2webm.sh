@@ -16,6 +16,11 @@ if [ ! $(which phantomjs) ]; then
     exit -2
 fi
 
+if [ ! $(which gtts-cli) ]; then
+    echo "ERROR: gtts-cli executable in current PATH"
+    exit -2
+fi
+
 if [ "$#" -lt 1 ]; then
 	echo "USAGE: $0  <url to 4chin post> [-u: upload to mixtape.moe]"
 	exit -1

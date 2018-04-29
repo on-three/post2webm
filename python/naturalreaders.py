@@ -8,6 +8,8 @@ import argparse
 import urllib
 import requests
 import random
+import errno
+import os
 
 # after https://stackoverflow.com/questions/16694907/how-to-download-large-file-in-python-with-requests-py
 def download_file(url, filename):
@@ -29,7 +31,6 @@ class Voice(object):
     self._id = id
     self._api = api
 
-
 voices = {
   "sharon" : Voice("sharon", "42", "4"), # eng (US)
   "amanda" : Voice("amanda", "1", "4"), # eng (US)
@@ -44,6 +45,8 @@ voices = {
   "graham" : Voice("graham", "25", "0"),
   "selene" : Voice("selene", "4", "4"),
   "darren" : Voice("darren", "3", "4"), # eng (UK) --> Goku
+  # add one for google TTS via gtts
+  # "google" : Voice("google", "0", "0"),
 }
 
 
@@ -63,7 +66,20 @@ def do_tts(text, outfile, voice="darren", speed="-4"):
   # Lines that don't end with punctuation (i.e. newline only) screw up the TTS
   # so we replace newlines with '.'
   text = text.replace('\n', '. ')
-  
+
+  if voice_data._name == "google":
+    # defer to command line  
+    # gtts-cli -f ${POST_TXT} -o ${POST_AUDIO}
+    text = text.replace('"', '\\"')
+    text = text.replace("'", "\\'")
+    cmd = 'gtts-cli -o {outfile} "{txt}"'.format(txt=text, outfile=outfile)
+    print("Running command : " + cmd)
+    os.system(cmd)
+    # make sure we have an generated outfile or throw
+    if not os.path.isfile(outfile):
+      raise Exception("Failed to generate audio file: " + outfile)
+    return 
+ 
   text = urllib.quote(text, safe='')
 
   url = "https://api.naturalreaders.com/v4/tts/macspeak?apikey={apikey}&src={src}&r={reader}&s={speed}&t={text}".format(apikey=apikey, src=src, reader=reader, speed=speed, text=text)
@@ -75,7 +91,7 @@ def main():
   parser = argparse.ArgumentParser(description='Scrape naturalreaders for TTS mp3 files.')
   parser.add_argument('text', nargs='?', action="store")
   parser.add_argument('-v', '--voice', type=str, default="darren")
-  parser.add_argument('-s','--speed', type=str, default="-2")
+  parser.add_argument('-s','--speed', type=str, default="0")
   parser.add_argument('-f','--file', type=str, default=None, help="Provide input text via file, not command line.")
   parser.add_argument('-o', '--outfile', type=str, default='output.mp3')
   args = parser.parse_args()
