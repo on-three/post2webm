@@ -59,8 +59,13 @@ def do_tts(text, outfile, voice="darren", speed="-4"):
   reader = voice_data._id
   apikey="b98x9xlfs54ws4k0wc0o8g4gwc0w8ss"
   src="pw"
+  
+  # Lines that don't end with punctuation (i.e. newline only) screw up the TTS
+  # so we replace newlines with '.'
+  text = text.replace('\n', '. ')
+  
   text = urllib.quote(text, safe='')
- 
+
   url = "https://api.naturalreaders.com/v4/tts/macspeak?apikey={apikey}&src={src}&r={reader}&s={speed}&t={text}".format(apikey=apikey, src=src, reader=reader, speed=speed, text=text)
   if voice_data._api == "0":
     url = "https://api.naturalreaders.com/v0/tts/?src={src}&r={reader}&s={speed}&t={text}".format(src=src, reader=reader, speed=speed, text=text) 
