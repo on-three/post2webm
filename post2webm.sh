@@ -26,7 +26,11 @@ if [ "$#" -gt 1 ]; then
 UPLOAD=true
 fi
 
-#POST_URL=http://boards.4chan.org/tv/thread/91304338#p91304338
+# POST_URL (currentlY) will be in the form:
+# http://boards.4chan.org/tv/thread/91304338#p91304338
+# so we do a somple regex check on it (for trailing #p)
+# This could be significantly improved to check for proper URLs
+# or process URLs for other sites (archive sites, for example)
 POST_URL=$1
 
 # get the post number off the url for bash regex
@@ -50,9 +54,17 @@ POST_TXT=${WORKING_DIR}/${POST_NUM}.txt
 POST_AUDIO=${WORKING_DIR}/${POST_NUM}.mp3
 POST_VIDEO=${WORKING_DIR}/${POST_NUM}.mp4
 POST_WEBM=${POST_NUM}.webm
+
+# I'm forcing final webm size to these dimensions currently
+# Post image should be correctly sized to be as large as possible within
+# these dimensions.
 #IMG_SIZE=1024x768
 IMG_SIZE=640X480
+
+# NO_TEXT_DURATION is how many seconds of video to generate
+# if the post has no text (image only).
 NO_TEXT_DURATION_S=4
+
 # generate an image and textfile off the post
 # there will ALWAYS be a POST_IMG afterwards but there may not be a POST_TXT
 if [ ! -f $POST_IMG ]; then
@@ -67,14 +79,20 @@ if [ ! -f $POST_IMG ]; then
 fi
 
 # generate TTS audio or silence if there's no post text
+# first POST_AUDIO check for file is caching on multiple runs
+# to ensure we don't regenerate audio files too much.
 if [ ! -f ${POST_AUDIO} ]; then
   if [ ! -f ${POST_TXT} ]; then
     #generate silence of N seconds for posts with no text
     ffmpeg -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=24000 -t ${NO_TEXT_DURATION_S} ${POST_AUDIO}
   else
     # generate TTS audio of post via webservice.
-    # TODO: randomize voices.
-    gtts-cli -f ${POST_TXT} -o ${POST_AUDIO}
+    # this line uses gtts-cli which is pretty good. Uncomment to use it
+    #gtts-cli -f ${POST_TXT} -o ${POST_AUDIO}
+
+    # This uses the naturalreaders.py script in this repo, randomizing voices
+    # usage: naturalreaders.py [-h] [-v VOICE] [-s SPEED] [-o OUTFILE] text
+    python/naturalreaders.py -o ${POST_AUDIO} -v random -f "${POST_TXT}"
   fi
 fi
 

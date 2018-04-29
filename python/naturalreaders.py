@@ -7,7 +7,7 @@
 import argparse
 import urllib
 import requests
-
+import random
 
 # after https://stackoverflow.com/questions/16694907/how-to-download-large-file-in-python-with-requests-py
 def download_file(url, filename):
@@ -49,7 +49,13 @@ voices = {
 
 def do_tts(text, outfile, voice="darren", speed="-4"):
   global voices
+
+  if not voice in voices or voice == "random":
+    # choose a random voice
+    voice = random.choice(voices.keys())
+  
   voice_data = voices[voice]
+
   reader = voice_data._id
   apikey="b98x9xlfs54ws4k0wc0o8g4gwc0w8ss"
   src="pw"
@@ -62,16 +68,26 @@ def do_tts(text, outfile, voice="darren", speed="-4"):
 
 def main():
   parser = argparse.ArgumentParser(description='Scrape naturalreaders for TTS mp3 files.')
-  parser.add_argument('text', action="store")
+  parser.add_argument('text', nargs='?', action="store")
   parser.add_argument('-v', '--voice', type=str, default="darren")
-  parser.add_argument('-s','--speed', type=str, default="-4")
+  parser.add_argument('-s','--speed', type=str, default="-2")
+  parser.add_argument('-f','--file', type=str, default=None, help="Provide input text via file, not command line.")
   parser.add_argument('-o', '--outfile', type=str, default='output.mp3')
   args = parser.parse_args()
 
-  print("Doing TTS for input string: '{text}'".format(text=args.text))
+  text = ""
+  if args.text:
+    text = args.text
+
+  if args.file:
+    # take contents of indicated file as text now command line data
+    # we allow this to fail in cases of file read error
+    text = open(args.file, 'r').read()
+
+  print("Doing TTS for input string: '{text}'".format(text=text))
   print("Generating output file: {outfile}".format(outfile=args.outfile))
   
-  do_tts(args.text, args.outfile, voice=args.voice, speed=args.speed)
+  do_tts(text, args.outfile, voice=args.voice, speed=args.speed)
   
 
 if __name__ == '__main__':
